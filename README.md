@@ -1,2 +1,2 @@
-# cart_pole
- Cart Pole project for advanced robotics course
+# advanced_robotics_rl
+ Advanced Robotics project
