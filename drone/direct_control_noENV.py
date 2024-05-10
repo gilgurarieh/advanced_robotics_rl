@@ -27,13 +27,12 @@ vrep_sim.simxSynchronousTrigger(client_ID)  # trigger one simulation step, takes
 drone_model = DroneModel('Drone')
 drone_model.initializeSimModel(client_ID)
 
-q = [0.0, 0.0]
 for i in range(20):
-    # q[0] = cart_pole_sim_model.getJointPosition('prismatic_joint')
-    # q[1] = cart_pole_sim_model.getJointPosition('revolute_joint')
-    # print('q={}'.format(q))
+    ## Horizontal control
+    # get target relative position to base
 
-    action = [1, 1, 1, 1]
+
+    action = [6.4353168663368,6.0979366060253,6.0959686560516,7.5415910104827]
     drone_model.setPropellerThrust(action)
 
     vrep_sim.simxSynchronousTrigger(client_ID)
