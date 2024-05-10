@@ -11,3 +11,5 @@ print(f"chosen action: {action}")
 
 new_state, reward, _, _, _ = drone_env.step(action)
 print(f"new state: {new_state}, reward: {reward}")
+
+drone_env.close()
