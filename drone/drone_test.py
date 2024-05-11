@@ -1,3 +1,4 @@
+
 from DroneEnv import DroneEnv
 
 drone_env = DroneEnv()
@@ -11,5 +12,9 @@ print(f"chosen action: {action}")
 
 new_state, reward, _, _, _ = drone_env.step(action)
 print(f"new state: {new_state}, reward: {reward}")
+
+# env = DroneEnv()
+# new_target_position = [0.5, 0.5, 0.2]  # New XYZ coordinates
+# env.update_target_position(new_target_position)
 
 drone_env.close()
