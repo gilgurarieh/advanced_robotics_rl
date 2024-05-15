@@ -17,7 +17,7 @@ class DroneEnv(gymnasium.Env):
     def __init__(self):
         super(DroneEnv, self).__init__()
         # define some internal values
-        self.action_scaling = 1
+        self.action_scaling = 10
 
         # define action and observation space
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(4,), dtype=np.float32)
@@ -27,6 +27,10 @@ class DroneEnv(gymnasium.Env):
 
         # initialize random seed
         self.seed()
+
+        # initialize step count for truncation
+        self.step_count = 0
+        self.max_steps = 20
 
         # Connect to VREP (CoppeliaSim)
         sim.simxFinish(-1)  # close all opened connections
@@ -44,7 +48,6 @@ class DroneEnv(gymnasium.Env):
             # Fetch the initial state from CoppeliaSim
             self.current_state_dict = {}
             self.state = self.get_current_state()
-            print(f"Initial state fetched at environment creation: {self.current_state_dict}")
         else:
             print('Failed connecting to remote API server! Try it again ...')
 
@@ -60,8 +63,10 @@ class DroneEnv(gymnasium.Env):
         # Convert the action to a NumPy array (if it isn't already)
         action = np.array(action, dtype=np.float32)
 
+
         # Scale the action using the action scaling factor
         action = self.action_scaling * action
+        # print(f"action: {action}")
 
         # Apply the action to the CoppeliaSim model
         action_list = action.tolist()
@@ -69,17 +74,19 @@ class DroneEnv(gymnasium.Env):
 
         # Get new state:
         new_state = self.get_current_state()
-        print(f"State fetched during step: \n {self.current_state_dict}\n")
 
         # Check if state is terminated
         terminated = self.check_terminal_state()
 
         # Get reward
         reward = self.calculate_reward()  # Normal reward calculation based on the latest state
-        print(f"reward: {reward}")
 
         # Determine if the episode is truncated
-        truncated = False  # Assuming normal conditions for truncation
+        if self.step_count >= self.max_steps:
+            truncated = True
+        else:
+            truncated = False
+            self.step_count = self.step_count + 1
 
         # Compile all information into a dictionary
         info = {}
@@ -88,6 +95,7 @@ class DroneEnv(gymnasium.Env):
         if not terminated and not truncated:
             self.state = new_state
 
+        print(f"step count: {self.step_count}")
         return new_state, reward, terminated, truncated, info
 
     def get_current_state(self):
@@ -138,17 +146,21 @@ class DroneEnv(gymnasium.Env):
         return state
 
     def calculate_reward(self):
-        reward_scaling = 1
+        reward_scaling = 0.4
+        reward_normalizing = 2.0
         state_dict = self.current_state_dict
-        pos = np.array(state_dict["drone_pos"])
-        target_pos = np.array(state_dict["target_pos"])
+        # pos = np.array(state_dict["drone_pos"])
+        alpha = state_dict["drone_ori"][0]
+        beta = state_dict["drone_ori"][1]
+        height = state_dict["drone_pos"][2]
+        # target_pos = np.array(state_dict["target_pos"])
+        target_height = state_dict["target_pos"][2]
 
         # calculate distance between drone and target
-        dist = np.linalg.norm(pos-target_pos)
 
         # calculate reward
-        reward = -reward_scaling * dist
-
+        reward = reward_scaling*(height-target_height) - alpha - beta
+        print(f"step reward: {reward}")
         return reward
 
     # def calculate_reward(self, new_state):
@@ -200,19 +212,21 @@ class DroneEnv(gymnasium.Env):
 
         # check if position is too far
         dist_to_target = np.linalg.norm(pos-target_pos)
-        if dist_to_target > 8:
+        if dist_to_target > 4.5:
             is_terminal = True
+            print("Terminated: too far from target")
 
         # check if orientation is too extreme
-        threshold = 30  # degrees, for example
-        if alpha > threshold or beta > threshold:
+        threshold = 90  # degrees, for example
+        if abs(alpha) > np.radians(threshold) or abs(beta) > np.radians(threshold):
             is_terminal = True
+            print("Terminated: angle too big")
 
         #TODO: check velocities
 
         return is_terminal
 
-    def reset(self):
+    def reset(self, seed=None):
         # Stop the simulation
         sim.simxStopSimulation(self.drone_sim_model.client_ID, sim.simx_opmode_blocking)
         sim.simxGetPingTime(self.drone_sim_model.client_ID)
@@ -222,10 +236,21 @@ class DroneEnv(gymnasium.Env):
         sim.simxStartSimulation(self.drone_sim_model.client_ID, sim.simx_opmode_oneshot)
         sim.simxSynchronousTrigger(self.drone_sim_model.client_ID)
 
+        # restart step count
+        self.step_count = 0
+
+        # Send the drone to its initial position:
+        initial_pos = (-0.55, 0.6, 0.5)
+        initial_ori = (0.0, 0.0, 0.0)
+        opmode = sim.simx_opmode_buffer
+        sim.simxSetObjectPosition(self.drone_sim_model.client_ID, self.drone_sim_model.heli_handle,-1,  initial_pos, opmode)
+        sim.simxSetObjectOrientation(self.drone_sim_model.client_ID, self.drone_sim_model.heli_handle, -1, initial_ori, opmode)
+
+
         # Fetch the initial state from CoppeliaSim again
         state = self.get_current_state()
         self.state = state
-        print(f"State fetched after reset: {self.current_state_dict}")
+        # print(f"State fetched after reset: {self.current_state_dict}")
         return state, {}
 
     def render(self):
