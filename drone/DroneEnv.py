@@ -94,6 +94,7 @@ class DroneEnv(gymnasium.Env):
         # update state - maybe we don't need it!
         if not terminated and not truncated:
             self.state = new_state
+            reward = -10
 
         print(f"step count: {self.step_count}")
         return new_state, reward, terminated, truncated, info
@@ -146,7 +147,7 @@ class DroneEnv(gymnasium.Env):
         return state
 
     def calculate_reward(self):
-        reward_scaling = 0.4
+        reward_scaling = 3
         reward_normalizing = 2.0
         state_dict = self.current_state_dict
         # pos = np.array(state_dict["drone_pos"])
@@ -211,10 +212,15 @@ class DroneEnv(gymnasium.Env):
         target_pos = np.array(state_dict["target_pos"])
 
         # check if position is too far
-        dist_to_target = np.linalg.norm(pos-target_pos)
-        if dist_to_target > 4.5:
+        horizontal_distance = np.sqrt((pos[0]-target_pos[0])**2 + (pos[1]-target_pos[1])**2)
+        if horizontal_distance > 5:
             is_terminal = True
             print("Terminated: too far from target")
+
+        # check if colliding with ground
+        if pos[2] <= 0.1:
+            is_terminal = True
+            print("Terminated: reached ground")
 
         # check if orientation is too extreme
         threshold = 90  # degrees, for example

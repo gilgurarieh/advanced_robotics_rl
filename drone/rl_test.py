@@ -9,7 +9,7 @@ env = DroneEnv()
 policy_kwargs = dict(activation_fn=torch.nn.ReLU, net_arch=[dict(pi=[64, 64], vf=[64, 64])])
 
 # Create the PPO agent
-ppo_agent = PPO("MlpPolicy", env, policy_kwargs=policy_kwargs, verbose=1)
+ppo_agent = PPO("MlpPolicy", env, gamma=0.95, policy_kwargs=policy_kwargs, verbose=1)
 
 # Train the agent
 ppo_agent.learn(total_timesteps=1000)

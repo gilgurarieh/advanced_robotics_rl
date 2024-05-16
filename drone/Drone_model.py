@@ -50,7 +50,7 @@ class DroneModel():
         #                                                vrep_sim.simx_opmode_streaming)
 
         # Set the initialized position for each joint
-        self.setPropellerThrust([1,1,1,1])
+        # self.setPropellerThrust([1,1,1,1])
 
 
     def setPropellerThrust(self, thrust):
