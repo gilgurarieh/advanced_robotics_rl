@@ -17,10 +17,10 @@ class DroneEnv(gymnasium.Env):
     def __init__(self):
         super(DroneEnv, self).__init__()
         # define some internal values
-        self.action_scaling = 10
+        self.action_scaling = 50
 
         # define action and observation space
-        self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(4,), dtype=np.float32)
+        self.action_space = spaces.Box(low=0.0, high=1.0, shape=(4,), dtype=np.float32)
         drone_params = 4 + 3 + 6  # orientation quaternion + position + velocities
         target_params = 3 # position only
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(drone_params+target_params,), dtype=np.float32)
@@ -91,10 +91,13 @@ class DroneEnv(gymnasium.Env):
         # Compile all information into a dictionary
         info = {}
 
+        if terminated:
+            reward = -10
+
         # update state - maybe we don't need it!
         if not terminated and not truncated:
             self.state = new_state
-            reward = -10
+
 
         print(f"step count: {self.step_count}")
         return new_state, reward, terminated, truncated, info
@@ -147,7 +150,7 @@ class DroneEnv(gymnasium.Env):
         return state
 
     def calculate_reward(self):
-        reward_scaling = 3
+        reward_scaling = 10
         reward_normalizing = 2.0
         state_dict = self.current_state_dict
         # pos = np.array(state_dict["drone_pos"])
@@ -160,40 +163,9 @@ class DroneEnv(gymnasium.Env):
         # calculate distance between drone and target
 
         # calculate reward
-        reward = reward_scaling*(height-target_height) - alpha - beta
+        reward = reward_scaling*(max([0,1-abs(height-target_height)])) - abs(alpha) - abs(beta)
         print(f"step reward: {reward}")
         return reward
-
-    # def calculate_reward(self, new_state):
-    #     drone_dq = new_state['drone']
-    #     target_dq = new_state['target']
-    #
-    #     # Calculate current distance and orientation deviation
-    #     current_distance, orientation_deviation = utils.calculate_distance_and_orientation(drone_dq, target_dq)
-    #
-    #     # Calculate progress
-    #     if self.previous_distance is not None:
-    #         distance_improvement = self.previous_distance - current_distance
-    #     else:
-    #         distance_improvement = 0
-    #
-    #     # Update previous distance
-    #     self.previous_distance = current_distance
-    #
-    #     # Define reward components
-    #     position_reward = distance_improvement * 10  # Scale to make meaningful
-    #     stability_reward = 1  # Constant reward for staying in flight
-    #     orientation_penalty = -orientation_deviation  # Penalty for large orientation deviations
-    #
-    #     # Combine rewards
-    #     reward = position_reward + stability_reward + orientation_penalty
-    #
-    #     # Check for excessive tilt and apply penalties
-    #     tilt_threshold = 30  # degrees
-    #     if orientation_deviation > tilt_threshold:
-    #         reward -= 100  # Large penalty for losing balance
-    #
-    #     return reward
 
     def check_terminal_state(self):
         '''
@@ -223,7 +195,7 @@ class DroneEnv(gymnasium.Env):
             print("Terminated: reached ground")
 
         # check if orientation is too extreme
-        threshold = 90  # degrees, for example
+        threshold = 30  # degrees, for example
         if abs(alpha) > np.radians(threshold) or abs(beta) > np.radians(threshold):
             is_terminal = True
             print("Terminated: angle too big")
