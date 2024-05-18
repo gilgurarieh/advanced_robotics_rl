@@ -72,6 +72,11 @@ class DroneEnv(gymnasium.Env):
         action_list = action.tolist()
         self.drone_sim_model.setPropellerThrust(action_list)
 
+        # Trigger the simulation step
+        sim.simxSynchronousTrigger(self.client_ID)
+        # Ensure the step is complete
+        sim.simxGetPingTime(self.client_ID)
+
         # Get new state:
         new_state = self.get_current_state()
 
@@ -92,14 +97,15 @@ class DroneEnv(gymnasium.Env):
         info = {}
 
         if terminated:
-            reward = -10
+            reward = -50
 
         # update state - maybe we don't need it!
         if not terminated and not truncated:
             self.state = new_state
 
-
         print(f"step count: {self.step_count}")
+        print(f"Action: {action_list}")
+        print(f"step reward: {reward}")
         return new_state, reward, terminated, truncated, info
 
     def get_current_state(self):
@@ -144,9 +150,10 @@ class DroneEnv(gymnasium.Env):
 
         # Construct state
         state_list = drone_quat + drone_pos + v_lin + v_ang + target_pos #4+3+3+3+3 = 16
+        print("state_list: ",state_list)
         # print(f"state list: {state_list}")
         state = np.array(state_list)
-
+        print("state: ", state)
         return state
 
     def calculate_reward(self):
@@ -164,7 +171,7 @@ class DroneEnv(gymnasium.Env):
 
         # calculate reward
         reward = reward_scaling*(max([0,1-abs(height-target_height)])) - abs(alpha) - abs(beta)
-        print(f"step reward: {reward}")
+        # print(f"step reward: {reward}")
         return reward
 
     def check_terminal_state(self):
@@ -195,7 +202,7 @@ class DroneEnv(gymnasium.Env):
             print("Terminated: reached ground")
 
         # check if orientation is too extreme
-        threshold = 30  # degrees, for example
+        threshold = 60  # degrees, for example
         if abs(alpha) > np.radians(threshold) or abs(beta) > np.radians(threshold):
             is_terminal = True
             print("Terminated: angle too big")

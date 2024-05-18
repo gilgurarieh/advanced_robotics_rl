@@ -52,9 +52,10 @@ class DroneModel():
         # Set the initialized position for each joint
         # self.setPropellerThrust([1,1,1,1])
 
-
     def setPropellerThrust(self, thrust):
+        vrep_sim.simxPauseCommunication(self.client_ID, True)
         vrep_sim.simxSetFloatSignal(self.client_ID, 'thrust_signal1', thrust[0], vrep_sim.simx_opmode_oneshot)
         vrep_sim.simxSetFloatSignal(self.client_ID, 'thrust_signal2', thrust[1], vrep_sim.simx_opmode_oneshot)
         vrep_sim.simxSetFloatSignal(self.client_ID, 'thrust_signal3', thrust[2], vrep_sim.simx_opmode_oneshot)
         vrep_sim.simxSetFloatSignal(self.client_ID, 'thrust_signal4', thrust[3], vrep_sim.simx_opmode_oneshot)
+        vrep_sim.simxPauseCommunication(self.client_ID, False)

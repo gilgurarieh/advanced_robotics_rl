@@ -1,6 +1,6 @@
 import torch
 from stable_baselines3 import PPO
-from DroneEnv import DroneEnv  # Import your environment from DroneEnv.py
+from DroneEnv_test import DroneEnv  # Import your environment from DroneEnv.py
 
 # Create an instance of your environment
 env = DroneEnv()
