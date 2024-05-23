@@ -141,16 +141,22 @@ class DroneEnv(gymnasium.Env):
             reward = r_stabilize
             if terminated and termination_reason in ["angle_too_big", "reached_ground"]:
                 reward -= 100
+            elif terminated:
+                reward -= 10
 
         elif self.reward_type == "vertical":
             reward = 0.3*r_stabilize + 0.7*r_vertical
             if terminated and termination_reason in ["reached_ground", "vertical"]:
                 reward -= 100
+            elif terminated:
+                reward -= 10
 
         elif self.reward_type == "position":
             reward = 0.1*r_stabilize + 0.2*r_vertical + 0.7*r_position
             if terminated and termination_reason in ["reached_ground", "vertical", "horizontal"]:
                 reward -= 100
+            elif terminated:
+                reward -= 10
         else:
             reward = 0
 
