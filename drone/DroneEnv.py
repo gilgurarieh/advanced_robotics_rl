@@ -4,6 +4,7 @@ from gymnasium.utils import seeding
 from gymnasium import spaces
 import time
 import sys
+import random
 
 sys.path.append('VREP_RemoteAPIs')
 import sim
@@ -18,6 +19,8 @@ class DroneEnv(gymnasium.Env):
         '''
         super(DroneEnv, self).__init__()
         self.action_scaling = 10
+        self.random_square = 0.1
+        self.random_angle = pi/12  #15 degrees
         self.reward_type = reward_type
         self.action_space = spaces.Box(low=0.0, high=1.0, shape=(4,), dtype=np.float32)
         drone_params = 4 + 3 + 6  # orientation quaternion + position + velocities
@@ -27,7 +30,7 @@ class DroneEnv(gymnasium.Env):
 
         self.seed()
         self.step_count = 0
-        self.max_steps = 100
+        self.max_steps = 2000
 
         # Connect to VREP (CoppeliaSim)
         sim.simxFinish(-1)

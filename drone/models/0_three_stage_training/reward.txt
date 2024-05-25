@@ -1,0 +1,43 @@
+    def calculate_reward(self, terminated, termination_reason):
+        reward_scaling = 10
+        state_dict = self.current_state_dict
+        alpha = state_dict["drone_ori"][0]
+        beta = state_dict["drone_ori"][1]
+        height = state_dict["drone_pos"][2]
+        target_height = state_dict["target_pos"][2]
+
+        # Calculate linear and angular velocities
+        linear_velocity = np.linalg.norm(state_dict["drone_v_lin"])
+        angular_velocity = np.linalg.norm(state_dict["drone_v_ang"])
+
+        # Calculate reward components
+        r_stabilize = -abs(alpha)/np.pi -abs(beta)/np.pi -linear_velocity/10 -angular_velocity/10
+        r_vertical = -abs(height-target_height) / 0.3  # normalize by maximum dist
+        drone_pos = state_dict["drone_pos"]
+        target_pos = state_dict["target_pos"]
+        r_position = -np.sqrt((drone_pos[0]-target_pos[0])**2 + (drone_pos[1]-target_pos[1])**2)
+
+        if self.reward_type == "stabilize":
+            reward = r_stabilize
+            if terminated and termination_reason in ["angle_too_big", "reached_ground"]:
+                reward -= 100
+            elif terminated:
+                reward -= 10
+
+        elif self.reward_type == "vertical":
+            reward = 0.3*r_stabilize + 0.7*r_vertical
+            if terminated and termination_reason in ["reached_ground", "vertical"]:
+                reward -= 100
+            elif terminated:
+                reward -= 10
+
+        elif self.reward_type == "position":
+            reward = 0.1*r_stabilize + 0.2*r_vertical + 0.7*r_position
+            if terminated and termination_reason in ["reached_ground", "vertical", "horizontal"]:
+                reward -= 100
+            elif terminated:
+                reward -= 10
+        else:
+            reward = 0
+
+        return reward
