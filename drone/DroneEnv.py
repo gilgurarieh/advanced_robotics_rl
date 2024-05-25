@@ -15,12 +15,12 @@ from Drone_model import DroneModel
 class DroneEnv(gymnasium.Env):
     def __init__(self, reward_type):
         '''
-        :param reward_type: "stabilize", "vertical", "position"
+        :param reward_type: "stabilize", "vertical", "position", "mixed"
         '''
         super(DroneEnv, self).__init__()
         self.action_scaling = 10
         self.random_square = 0.1
-        self.random_angle = pi/12  #15 degrees
+        self.random_angle = np.pi/12  #15 degrees
         self.reward_type = reward_type
         self.action_space = spaces.Box(low=0.0, high=1.0, shape=(4,), dtype=np.float32)
         drone_params = 4 + 3 + 6  # orientation quaternion + position + velocities
@@ -160,6 +160,11 @@ class DroneEnv(gymnasium.Env):
                 reward -= 100
             elif terminated:
                 reward -= 10
+
+        elif self.reward_type == "mixed":
+            reward = 2 + 0.0*r_stabilize + 1.0*r_vertical + 0.4*r_position
+            if terminated and termination_reason in ["reached_ground", "angle_too_big"]:
+                reward -= 100
         else:
             reward = 0
 
@@ -182,10 +187,10 @@ class DroneEnv(gymnasium.Env):
 
         horizontal_distance = np.sqrt((pos[0] - target_pos[0]) ** 2 + (pos[1] - target_pos[1]) ** 2)
         vertical_distance = np.abs(target_pos[2]-pos[2])
-        if horizontal_distance > 0.5:
+        if horizontal_distance > 0.8:
             print("Terminated: too far from target")
             return True, "horizontal"
-        if vertical_distance > 0.4:
+        if vertical_distance > 0.5:
             print("Terminated: too far from target")
             return True, "vertical"
 
@@ -193,7 +198,7 @@ class DroneEnv(gymnasium.Env):
             print("Terminated: reached ground")
             return True, "reached_ground"
 
-        threshold = 45  # degrees
+        threshold = 85  # degrees
         if abs(alpha) > np.radians(threshold) or abs(beta) > np.radians(threshold):
             print("Terminated: angle too big")
             return True, "angle_too_big"
@@ -214,13 +219,14 @@ class DroneEnv(gymnasium.Env):
         self.step_count = 0
 
         # Set initial position and orientation
-        initial_pos = (-0.55, 0.6, 0.51)
-        initial_ori = (0.0, 0.0, 0.0)
+        initial_pos, initial_ori, initial_target_pos = self.randomize_initial_positions()
         opmode = sim.simx_opmode_blocking
         sim.simxSetObjectPosition(self.drone_sim_model.client_ID, self.drone_sim_model.heli_handle, -1, initial_pos,
                                   opmode)
         sim.simxSetObjectOrientation(self.drone_sim_model.client_ID, self.drone_sim_model.heli_handle, -1, initial_ori,
                                      opmode)
+        sim.simxSetObjectPosition(self.drone_sim_model.client_ID, self.drone_sim_model.target_handle, -1, initial_target_pos,
+                                  opmode)
 
         # Wait for a moment to ensure the state is set
         time.sleep(1)  # Sleep for 1 second to let the simulation stabilize
@@ -229,6 +235,23 @@ class DroneEnv(gymnasium.Env):
         state = self.get_current_state()
         self.state = state
         return state, {}
+
+    def randomize_initial_positions(self):
+        dx = random.uniform(-self.random_square, self.random_square)
+        dy = random.uniform(-self.random_square, self.random_square)
+        dz = random.uniform(-self.random_square, self.random_square)
+        d_alpha = random.uniform(-self.random_angle, self.random_angle)
+        d_beta = random.uniform(-self.random_angle, self.random_angle)
+        d_gamma = random.uniform(-self.random_angle, self.random_angle)
+        dx_t = random.uniform(-self.random_square, self.random_square)
+        dy_t = random.uniform(-self.random_square, self.random_square)
+        dz_t = random.uniform(-self.random_square, self.random_square)
+
+        initial_pos = (-0.55+dx, 0.6+dy, 0.51+dz)
+        initial_ori = (0.0+d_alpha, 0.0+d_beta, 0.0+d_gamma)
+        initial_target_pos = (-0.55+dx_t, 0.6+dy_t, 0.51+dz_t)
+
+        return initial_pos, initial_ori, initial_target_pos
 
     def render(self):
         return None

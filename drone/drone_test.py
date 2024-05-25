@@ -10,9 +10,11 @@ start_time = time.time()
 # print(f"initial state: {initial_state}")
 
 # try to step the environment
-for i in range(30):
+terminated=False
+
+while not terminated:
     action = [1, 1, 1, 1]
-    new_state, reward, _, _, _ = drone_env.step(action)
+    new_state, reward, terminated, _, _ = drone_env.step(action)
 
 print(f"elapsed time: {time.time() - start_time}")
 
