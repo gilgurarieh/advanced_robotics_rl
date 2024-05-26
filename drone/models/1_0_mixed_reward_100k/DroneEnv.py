@@ -19,7 +19,7 @@ class DroneEnv(gymnasium.Env):
         '''
         super(DroneEnv, self).__init__()
         self.action_scaling = 10
-        self.random_square = 0.3
+        self.random_square = 0.1
         self.random_angle = np.pi/12  #15 degrees
         self.reward_type = reward_type
         self.action_space = spaces.Box(low=0.0, high=1.0, shape=(4,), dtype=np.float32)
