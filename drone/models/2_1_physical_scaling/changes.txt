@@ -1,0 +1,1 @@
+added highly negative reward for straying away from target

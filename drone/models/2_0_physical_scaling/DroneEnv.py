@@ -163,7 +163,7 @@ class DroneEnv(gymnasium.Env):
 
         elif self.reward_type == "mixed":
             reward = 0.0*r_stabilize + 1.0*r_vertical + 0.4*r_position
-            if terminated:
+            if terminated and termination_reason in ["reached_ground", "angle_too_big"]:
                 reward -= 100
         else:
             reward = 0
