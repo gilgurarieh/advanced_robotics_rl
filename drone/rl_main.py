@@ -27,11 +27,11 @@ eval_callback = EvalCallback(env, best_model_save_path='./logs/',
 # total_timesteps = 100000
 # env.reward_type = "mixed"
 #
-# agent = A2C("MlpPolicy", env, gamma=0.95, policy_kwargs=policy_kwargs, verbose=1)
-# # agent = A2C.load("a2c_physical_scaling_200k", env=env)
+# # agent = A2C("MlpPolicy", env, gamma=0.95, policy_kwargs=policy_kwargs, verbose=1)
+# agent = A2C.load("a2c_action_test_200k", env=env)
 #
 # agent.learn(total_timesteps=total_timesteps, callback=eval_callback)
-# agent.save("a2c_action_test_100k")
+# agent.save("a2c_action_test_280k")
 #
 # # Extract evaluation results and plot rewards
 # mean_rewards = [result[0] for result in eval_callback.evaluations_results]
@@ -40,7 +40,7 @@ eval_callback = EvalCallback(env, best_model_save_path='./logs/',
 
 # Test the model
 env = DroneEnv(reward_type="mixed")
-agent = A2C.load("a2c_action_test_100k", env=env)
+agent = A2C.load("a2c_action_test_200k", env=env)
 obs, _ = env.reset()
 terminated = False
 while not terminated:
