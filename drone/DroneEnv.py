@@ -106,8 +106,8 @@ class DroneEnv(gymnasium.Env):
         _, drone_pos = sim.simxGetObjectPosition(clientID, heli, -1, opmode)
         _, drone_ori = sim.simxGetObjectOrientation(clientID, heli, -1, opmode)
         _, v_lin, v_ang = sim.simxGetObjectVelocity(clientID, heli, opmode)
-        # _, target_pos = sim.simxGetObjectPosition(clientID, target, -1, opmode)
-        target_pos = [-0.550000011920929, 0.6000000238418579, 0.5]
+        _, target_pos = sim.simxGetObjectPosition(clientID, target, -1, opmode)
+        # target_pos = [-0.550000011920929, 0.6000000238418579, 0.5]
 
         self.current_state_dict = {
             "drone_pos": drone_pos,
