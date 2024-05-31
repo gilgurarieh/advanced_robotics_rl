@@ -1,6 +1,7 @@
 import torch
 import matplotlib.pyplot as plt
 from stable_baselines3 import A2C
+from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback
 from DroneEnv import DroneEnv  # Import your environment from DroneEnv.py
 
@@ -24,18 +25,32 @@ eval_callback = EvalCallback(env, best_model_save_path='./logs/',
                              deterministic=True, render=False)
 
 # Train the agent
-total_timesteps = 80000
+total_timesteps = 10000
 env.reward_type = "mixed"
 
 # agent = A2C("MlpPolicy", env, gamma=0.95, policy_kwargs=policy_kwargs, verbose=1)
-agent = A2C.load("a2c_action_test_200k", env=env)
+a2c_agent = A2C.load("a2c_action_test_200k", env=env)
+policy_weights = a2c_agent.policy.state_dict()
+ppo_model = PPO("MlpPolicy", env=env, policy_kwargs=policy_kwargs, verbose=1)
+ppo_model.policy.load_state_dict(policy_weights)
 
-agent.learn(total_timesteps=total_timesteps, callback=eval_callback)
-agent.save("a2c_action_test_280k")
+rewards_list = []
+k_timesteps = 210
 
-# Extract evaluation results and plot rewards
-mean_rewards = [result[0] for result in eval_callback.evaluations_results]
-plot_rewards(mean_rewards, title="Rewards")
+for i in range(2, 11):
+    # if not first - load the previous model
+    if i > 0:
+        model_name = "ppo_action_test_"+str(k_timesteps)+"k"
+        ppo_model = PPO.load(model_name, env=env)
+    ppo_model.learn(total_timesteps=total_timesteps, callba-ck=eval_callback)
+    k_timesteps += 10
+    ppo_model.save(f"ppo_action_test_{k_timesteps}k")
+    # Extract evaluation results and plot rewards
+    mean_rewards = [result[0] for result in eval_callback.evaluations_results]
+    rewards_list.append(mean_rewards)
+    plot_rewards(mean_rewards, title=model_name)
+
+print(f"rewards: {rewards_list}")
 
 
 # # Test the model
