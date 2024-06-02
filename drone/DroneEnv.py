@@ -30,7 +30,7 @@ class DroneEnv(gymnasium.Env):
 
         self.seed()
         self.step_count = 0
-        self.max_steps = 2000
+        self.max_steps = 300
 
         # Connect to VREP (CoppeliaSim)
         sim.simxFinish(-1)
@@ -93,6 +93,10 @@ class DroneEnv(gymnasium.Env):
         print(f"Velocities - Angular: {drone_v_ang}")
         print(f"Step reward: {reward}")
         print("\n")
+
+        ## REMOVE FOLLOWING LINE TO ENABLE TERMINAL STATES
+        terminated = False
+        ## REMOVE THE ABOVE LINE TO ENABLE TERMINAL STATES
 
         return new_state, reward, terminated, truncated, info
 

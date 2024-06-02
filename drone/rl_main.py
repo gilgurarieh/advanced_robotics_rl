@@ -35,7 +35,7 @@ env.reward_type = "mixed"
 # ppo_model.policy.load_state_dict(policy_weights)
 
 rewards_list = []
-k_timesteps = 300
+k_timesteps = 350
 
 for i in range(0, 11):
     # if not first - load the previous model
